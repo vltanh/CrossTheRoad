@@ -21,10 +21,10 @@ public:
 
 	POINT getPos() { return m_pos; }
 
-	virtual void draw(string);
-	void update(POINT);
+	virtual void draw(string, POINT, bool);
+	void update(POINT, bool);
 	virtual void talk() = 0;
-	virtual void save(char*);
+	virtual void save(FILE*);
 
 	bool isCollided(const POINT& p) {
 		int x = p.x - m_pos.x;

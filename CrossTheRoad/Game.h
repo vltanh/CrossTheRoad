@@ -11,11 +11,15 @@
 
 class CGame : protected GameWindow {
 private:
-	CPlayer p;
-	vector<CObstacle*> m_obs;
+	atomic<int> STATE;
+	bool DARK_MODE;
+
 	int m_level;
 
+	CPlayer p;
+	vector<CObstacle*> m_obs;
 	CTrafficLight m_trafficLight;
+	GameWindow* m_wnd;
 public:
 	CGame();
 	~CGame();
@@ -37,6 +41,7 @@ public:
 	void drawMenu();
 	void drawBorder();
 	void drawObstacle();
+	void drawLoading(int = 0);
 
 	void spawnObstacle();
 	void updateObstacle();

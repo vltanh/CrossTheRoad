@@ -62,3 +62,4 @@
 #define STATE_PLAYING 1
 #define STATE_PAUSED 2
 #define STATE_WIN 3
+#define STATE_LOAD 4

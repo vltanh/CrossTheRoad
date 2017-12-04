@@ -13,24 +13,12 @@ public:
 	CPlayer& operator = (const CPlayer& p) { m_pos = p.m_pos; m_state = p.m_state; return(*this); }
 
 	bool isDead() { return m_state == 0; }
-	bool isCollided(const POINT& a) { 
-		for (int j = 0; j < 3; j++) {
-			for (int k = 0; k < 3; k++) {
-				int x = (a.x + j) % WIDTH_BOARD + 1;
-				int y = a.y + k;
-
-				if (m_pos.x == x && m_pos.y == y) return true;
-			}
-		}
-		//return (a.x == m_pos.x && a.y == m_pos.y); 
-		return false;
-	}
 	bool isDone() { return m_pos.y == 1; }
 
 	void update();
 	void draw(string, int = 1);
 	void kill();
-	void save(char*);
+	void save(FILE*);
 	void load(FILE*);
 
 	POINT getPos() { return m_pos; }

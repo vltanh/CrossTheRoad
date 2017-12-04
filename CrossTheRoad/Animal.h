@@ -16,19 +16,19 @@ public:
 	}
 private:
 	void talk() { cout << "\b"; }
-	void draw(string s) {
+	void draw(string s, POINT p, bool dark) {
 		drawTurn.lock();
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-		CObstacle::draw(s);
+		CObstacle::draw(s, p, dark);
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 		drawTurn.unlock();
 	}
 
-	void save(char* dir) {
-		FILE *f = fopen(dir, "a");
-		fprintf(f, "%c ", 'A');
-		fclose(f);
-		CObstacle::save(dir);
+	void save(FILE* f) {
+		//fprintf(f, "%c ", 'A');
+		char type = 'A';
+		fwrite(&type, sizeof(type), 1, f);
+		CObstacle::save(f);
 	}
 };
 

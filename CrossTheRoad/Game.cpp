@@ -7,6 +7,7 @@ mutex a;
 CGame::CGame() : GameWindow() {
 	p = CPlayer(WIDTH_BOARD / 2, HEIGHT_BOARD);
 	m_level = 1;
+	DARK_MODE = false;
 }
 
 CGame::~CGame()
@@ -16,29 +17,99 @@ CGame::~CGame()
 }
 
 void CGame::initGame() {
-	cout << "Welcome to: CROSS THE ROAD!" << endl;
-	cout << "* [N]ew Game" << endl;
-	cout << "* [L]oad Game" << endl;
-	cout << "* [S]ettings" << endl;
+	system("cls");
+	int h0 = 3;
+
+	vector<string> a = {
+		"   ______                        __  __            ____                  __",
+		"  / ____/________  __________   / /_/ /_  ___     / __ \\____  ____ _____/ /",
+		" / /   / ___/ __ \\/ ___/ ___/  / __/ __ \\/ _ \\   / /_/ / __ \\/ __ `/ __  / ",
+		"/ /___/ /  / /_/ (__  |__  )  / /_/ / / /  __/  / _, _/ /_/ / /_/ / /_/ /  ",
+		"\\____/_/   \\____/____/____/   \\__/_/ /_/\\___/  /_/ |_|\\____/\\__,_/\\__,_/   "
+	};
+
+	int w = a[0].size();
+	int h = a.size();
+	POINT start = { WIDTH_CONSOLE / 2 - w / 2, h0};
+	for (int i = 0; i < h; i++) {
+		for (int j = 0; j < w; j++) {
+			GotoXY(start.x + j, start.y + i);
+			cout << a[i][j];
+		}
+	}
+
+	int left = WIDTH_CONSOLE / 2 - strlen("[N]ew Game") / 2;
+	GotoXY(left, h0 + h + 4);
+	cout << "[N]ew Game";
+	GotoXY(left, h0 + h + 5);
+	cout << "[L]oad Game";
+	GotoXY(left, h0 + h + 6);
+	cout << "[S]ettings";
+	GotoXY(left, h0 + h + 7);
+	cout << "[E]xit";
+
 	char temp = 0;
-	while (temp != 'L' && temp != 'S' && temp != 'N') {
+	while (temp != 'L' && temp != 'S' && temp != 'N' && temp != 'E') {
 		temp = toupper(_getch());
 		if (temp == 'N') {
-			cout << "Starting...";
-			Sleep(1500);
+			drawLoading(h0 + 3);
 			resetGame();
 			startGame();
 		}
 		else if (temp == 'L') {
-			cout << "Loading...";
-			Sleep(1500);
 			loadGame(true);
 		}
+		else if (temp == 'E') {
+			GotoXY(start.x, h0 + h + 12);
+			cout << "Exiting...";
+			Sleep(1000);
+			return;
+		}
 		else if (temp == 'S') {
-			cout << "This feature is not yet implemented. \nThe game will start shortly...";
-			Sleep(1500);
-			resetGame();
-			startGame();
+			clearRow(5, h0 + h + 4, h0 + h + 7);
+
+			GotoXY(left, h0 + h + 4);
+			cout << "[D]ark Mode";
+			GotoXY(left, h0 + h + 5);
+			cout << "[L]evel";
+			GotoXY(left, h0 + h + 6);
+			cout << "[B]ack";
+
+			char set = '0';
+			while (set != 'D' && set != 'L' && set != 'B') {
+				set = toupper(_getch());
+
+				if (set == 'D') {
+					GotoXY(start.x, h0 + h + 12);
+					if (DARK_MODE) cout << "Dark mode deactivated!";
+					else cout << "Dark mode activated!";
+					DARK_MODE = 1 - DARK_MODE;
+					Sleep(1000);
+					clearRow(start.x - 1, h0 + h + 12);
+					//drawLoading(h0 + 3);
+					//resetGame();
+					//startGame();
+					set = '0';
+				}
+				else if (set == 'L') {
+					int lv;
+					GotoXY(start.x, h0 + h + 12);
+					cout << "Start at level (1 - 3): ";
+					cin >> lv;
+					if (lv > 3) lv = 3;
+					else if (lv < 1) lv = 1;
+					Sleep(1000);
+					clearRow(start.x - 1, h0 + h + 12);
+					//drawLoading(h0 + 3);
+					m_level = lv;
+					//resetGame();
+					//startGame();
+					set = '0';
+				}
+				else if (set == 'B') {
+					initGame();
+				}
+			}
 		}
 	}
 }
@@ -49,7 +120,7 @@ void CGame::startGame() {
 	drawMenu();
 	m_trafficLight.draw();
 	p.draw("X");
-	updateObstacle();
+	drawObstacle();
 	STATE = 1;
 	playGame();
 }
@@ -88,10 +159,10 @@ void CGame::spawnObstacle() {
 }
 
 void CGame::resetGame() {
-	STATE = 1;
 	spawnObstacle();
 	p = CPlayer(WIDTH_BOARD / 2, HEIGHT_BOARD);
 	m_trafficLight = CTrafficLight();
+	STATE = STATE_PLAYING;
 }
 
 void CGame::getKey() {
@@ -103,23 +174,23 @@ void CGame::getKey() {
 		}
 		else if (isPressed(KEY_L)) {
 			pauseGame();
-			//STATE = 4;
 			saveGame();
 		}
 		else if (isPressed(KEY_T)) {
-			//pauseGame();
 			STATE = 4;
-			//loadGame();
 		}
+	}
+	if (STATE == STATE_PAUSED) {
+		if (isPressed(KEY_U))
+			STATE = STATE_PLAYING;
 	}
 }
 
 void CGame::pauseGame() {
-	STATE = 2;
+	STATE = STATE_PAUSED;
 }
 
 void CGame::endGame() {
-	//p.draw("X", 0);
 	p.kill();
 
 	clearRow(1, HEIGHT_CONSOLE + 5);
@@ -205,6 +276,37 @@ void CGame::drawBorder() {
 	SetConsoleTextAttribute(hConsole, 15);
 }
 
+void CGame::drawLoading(int y) {
+	SetColor(LIGHTGREEN);
+
+	int width = 50;
+	int height = 5;
+
+	POINT start = { WIDTH_CONSOLE / 2 - strlen("LOADING") / 2, HEIGHT_CONSOLE / 2 - height / 2 - 1 + y };
+	GotoXY(start.x, start.y);
+	cout << "LOADING";
+
+	start = { WIDTH_CONSOLE / 2 - width / 2, HEIGHT_CONSOLE / 2 - height / 2 + y };
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
+			GotoXY(start.x + i, start.y + j);
+			cout << ".";
+		}
+	}
+
+	SetColor(YELLOW);
+	int count = 0;
+	start = { WIDTH_CONSOLE / 2 - 40 / 2, HEIGHT_CONSOLE / 2 + y};
+	for (int j = 0; j < 40; j++) {
+		Sleep(800 / ++count);
+		GotoXY(start.x + j, start.y);
+		cout << ">";
+	}
+	Sleep(1000);
+
+	SetColor(WHITE);
+}
+
 void CGame::drawMenu() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -223,32 +325,21 @@ void CGame::drawMenu() {
 	GotoXY(x + 2, height + y + 3);
 	cout << "Press Esc to Quit game." << endl;
 	clearRow(x, height + y + 5);
+
+	GotoXY(width + 5, height / 2);
+	cout << "LEVEL #" << m_level;
 }
 
 void CGame::drawObstacle() {
 	for (int i = 0; i < m_obs.size(); i++) 
-		m_obs[i]->draw("O");
+		m_obs[i]->draw("O", p.getPos(), DARK_MODE);
 }
 
 void CGame::updateObstacle() {
-	this_thread::sleep_for(200ms / m_level);
+	Sleep(200 / m_level);
 	for (int i = 0; i < m_obs.size(); i++) {
-		if (STATE == 0) return;
-
-		m_obs[i]->update(p.getPos());
-		
-		/*if (STATE) {
-			for (int j = 0; j < 3 && STATE; j++) {
-				for (int k = 0; k < 3; k++) {
-					int x = (m_obs[i]->getPos().x + j) % WIDTH_BOARD + 1;
-					int y = m_obs[i]->getPos().y + k;
-
-					if (p.isCollided({ x, y })) { STATE = 0; break; }
-				}
-			}
-		}*/
-
-		//if (STATE && p.isCollided(m_obs[i]->getPos())) { STATE = 0; break; }
+		if (STATE == STATE_DEAD || STATE == STATE_PAUSED || STATE == STATE_LOAD) return;
+		m_obs[i]->update(p.getPos(), DARK_MODE);
 		if (STATE && m_obs[i]->isCollided(p.getPos())) { STATE = 0; break; }
 	}
 }
@@ -259,58 +350,47 @@ void CGame::playGame() {
 	thread upd = updateObstacleThread();
 	thread light = updateTrafficLight();
 	while (true) {
-		if (STATE == 1) {
-			
-		}
-		else if (STATE == 2) {
-			switch (toupper(_getch()))
-				case 'U': STATE = 1;
-		}
-		else if (STATE == 0 || STATE == -1) {
+		if (STATE == STATE_DEAD || STATE == STATE_ESC || STATE == STATE_WIN || STATE == STATE_LOAD) 
 			break;
-		}
-		else if (STATE == 3) {
-			break;
-		}
-		else if (STATE == 4) {
-			break;
-		}
 	}
 	upd.join();
 	gk.join();
 	dr.join();
 	light.join();
 
-	if (STATE == 0) endGame();
-	if (STATE == 3) levelUp();
-	if (STATE == 4) loadGame();
+	if (STATE == STATE_DEAD) endGame();
+	if (STATE == STATE_WIN) levelUp();
+	if (STATE == STATE_LOAD) loadGame();
 }
 
 void CGame::saveGame() {
 	drawTurn.lock();
 
 	GotoXY(strlen("Press [L] to Save game.") + 3, HEIGHT_CONSOLE);
+	char *filename = new char[100];
+	cout << "Input file name: ";
+
 	ClearConsoleInputBuffer();
-	//char *filename = new char[100];
-	//cout << "Input file name: ";
-	//cin >> filename;
-	char filename[] = "hello";
-	strcat(filename, ".txt");
+	cin >> filename;
 
-	FILE* f = fopen(filename, "w");
-	fprintf(f, "%d %d %d\n", m_level, m_trafficLight.isGreen(), m_obs.size());
+	FILE* f = fopen(filename, "wb");
+	//fprintf(f, "%d %d %d\n", m_level, m_trafficLight.isGreen(), m_obs.size());
+	int green = m_trafficLight.isGreen();
+	int size = m_obs.size();
+
+	fwrite(&m_level, sizeof(m_level), 1, f);
+	fwrite(&DARK_MODE, sizeof(DARK_MODE), 1, f);
+	fwrite(&green, sizeof(green), 1, f);
+	fwrite(&size, sizeof(size), 1, f);
+
+	p.save(f);
+	for (int i = 0; i < m_obs.size(); i++) m_obs[i]->save(f);
 	fclose(f);
-
-	p.save(filename);
-	for (int i = 0; i < m_obs.size(); i++) m_obs[i]->save(filename);
-
-	f = fopen("HELLO.SAV", "wb");
-	fwrite(this, sizeof(*this), 1, f);
-	fclose(f);
+	delete filename;
 
 	GotoXY(2, HEIGHT_CONSOLE + 5);
 	cout << "Successfully saved! Press [U]npause to play.";
-	Sleep(2000);
+	Sleep(1500);
 
 	drawMenu();
 
@@ -318,45 +398,95 @@ void CGame::saveGame() {
 }
 
 void CGame::loadGame(bool menu) {
-	FILE *f = fopen("hello.txt", "r");
-	
-	int obs_size;
-	fscanf(f, "%d %d %d\n", &m_level, &m_trafficLight.isGreen(), &obs_size);
-	p.load(f);
-	m_obs.clear();
-	m_obs.resize(obs_size);
+	char *filename = new char[100];
+	FILE *f;
 
-	for (int i = 0; i < m_obs.size(); i++) {
-		char type;
-		int x, y, dir, speed;
+	if (menu) {
+		GotoXY(14, 20);
+		cout << "Input file name: ";
+
+		ClearConsoleInputBuffer();
+		cin >> filename;
+
+		f = fopen(filename, "rb");
 		
-		fscanf(f, "%c %d %d %d %d\n", &type, &x, &y, &dir, &speed);
-		if (type == 'A') m_obs[i] = new CAnimal({ x,y }, dir, speed);
-		if (type == 'V') m_obs[i] = new CVehicle({ x,y }, dir, speed);
+		if (f == NULL) {
+			clearRow(10, 20);
+			GotoXY(14, 20);
+			cout << "Loaded failed! Game will start shortly...";
+			resetGame();
+		}
+		drawLoading(6);
 	}
+	else {
+		GotoXY(strlen("Press [T] to Load game.") + 3, HEIGHT_CONSOLE + 1);
+		char *filename = new char[100];
+		cout << "Input file name: ";
 
-	fclose(f);
+		ClearConsoleInputBuffer();
+		cin >> filename;
 
-	if (!menu) {
+		f = fopen(filename, "rb");
 		GotoXY(2, HEIGHT_CONSOLE + 5);
-		cout << "Loading...";
-		Sleep(1000);
+		if (f == NULL) {
+			cout << "Loaded failed!";
+		}
+		else {
+			drawLoading();
+		}
 	}
 
+	if (f != NULL) {
+		int size;
+		int green;
+
+		fread(&m_level, sizeof(m_level), 1, f);
+		fread(&DARK_MODE, sizeof(DARK_MODE), 1, f);
+		fread(&green, sizeof(green), 1, f);
+		fread(&size, sizeof(size), 1, f);
+
+		m_trafficLight.isGreen() = green;
+
+		//fscanf(f, "%d %d %d\n", &m_level, &m_trafficLight.isGreen(), &obs_size);
+		p.load(f);
+
+		m_obs.clear();
+		m_obs.resize(size);
+
+		for (int i = 0; i < m_obs.size(); i++) {
+			//char type;
+			//int x, y, dir, speed;
+
+			//fscanf(f, "%c %d %d %d %d\n", &type, &x, &y, &dir, &speed);
+			char type;
+			POINT p;
+			int dir;
+			int speed;
+
+			fread(&type, sizeof(type), 1, f);
+			fread(&p, sizeof(p), 1, f);
+			fread(&dir, sizeof(dir), 1, f);
+			fread(&speed, sizeof(speed), 1, f);
+
+			if (type == 'A') m_obs[i] = new CAnimal(p, dir, speed);
+			if (type == 'V') m_obs[i] = new CVehicle(p, dir, speed);
+		}
+
+		fclose(f);
+	}
+
+	delete filename;
 	startGame();
 }
 
 thread CGame::getKeyThread() {
 	return thread([=] {
-		bool flag = true;
-		while (flag) {
-			switch (STATE) {
-			case STATE_PLAYING:
-				getKey(); break;
-			case STATE_PAUSED:
+		while (true) {
+			if (STATE == STATE_PLAYING || STATE == STATE_PAUSED) {
+				getKey();
+			}
+			else {
 				break;
-			default:
-				flag = false; break;
 			}
 		}
 	});
@@ -365,8 +495,11 @@ thread CGame::getKeyThread() {
 thread CGame::updateObstacleThread() {
 	return thread([=] {
 		while (true) {
-			if (STATE == STATE_ESC || STATE == STATE_DEAD || STATE == STATE_WIN || STATE == 4) break;
-			else if (STATE != STATE_PAUSED && m_trafficLight.isGreen()) updateObstacle();
+			if (STATE == STATE_ESC || STATE == STATE_DEAD || STATE == STATE_WIN || STATE == STATE_LOAD) break;
+			if (STATE != STATE_PAUSED) {
+				if (m_trafficLight.isGreen()) updateObstacle();
+				else drawObstacle();
+			}
 		}
 	});
 }
@@ -377,7 +510,7 @@ thread CGame::updatePlayerThread() {
 			if (STATE == STATE_PLAYING) {
 				p.update();
 				if (p.isDone()) {
-					STATE = 3;
+					STATE = STATE_WIN;
 					break;
 				}
 				drawTurn.lock();

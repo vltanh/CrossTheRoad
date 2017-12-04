@@ -13,14 +13,16 @@ public:
 	CTrafficLight& operator = (const CTrafficLight& tl) { m_state = tl.m_state; return(*this); }
 	void draw() {
 		drawTurn.lock();
-		if (m_state == 0) {
-			SetColor(LIGHTRED);
+		for (int i = 0; i < NOBSTACLES; i++) {
+			if (m_state == 0) {
+				SetColor(LIGHTRED);
+			}
+			else if (m_state == 1) {
+				SetColor(LIGHTGREEN);
+			}
+			GotoXY(0, LANE_HEIGHT*i + 2);
+			cout << "L";
 		}
-		else if (m_state == 1) {
-			SetColor(LIGHTGREEN);
-		}
-		GotoXY(0, 0);
-		cout << "L";
 		SetColor(WHITE);
 		drawTurn.unlock();
 	}

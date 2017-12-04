@@ -9,7 +9,7 @@ void fixConsoleWindow() {
 
 	RECT r;
 	GetWindowRect(consoleWindow, &r);
-	MoveWindow(consoleWindow, r.left, r.top, 450, 503, TRUE);
+	MoveWindow(consoleWindow, r.left, r.top, 1000, 600, TRUE);
 }
 
 void hideCursor() {
@@ -58,7 +58,8 @@ void clearRow(int startX, int startY, int endY, int len) {
 		endY = startY;
 	for (int i = startY; i <= endY; i++) {
 		GotoXY(startX + 1, i);
-		printf("%48c", ' ');
+		int n = len;
+		while (n--) cout << ' ';
 	}
 }
 

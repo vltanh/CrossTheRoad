@@ -1,5 +1,7 @@
 #pragma once
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <iostream>
 #include <Windows.h>
 #include <time.h>
@@ -23,6 +25,6 @@ extern mutex drawTurn;
 
 void pressEnter();
 void ClearConsoleInputBuffer();
-void clearRow(int startX, int startY, int endY = -1, int len = 10);
+void clearRow(int startX, int startY, int endY = -1, int len = 90);
 
 void SetColor(int);

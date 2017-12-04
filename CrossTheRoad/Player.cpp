@@ -1,9 +1,7 @@
 #include "Player.h"
 
 void CPlayer::update() {
-	this_thread::sleep_for(75ms);
-
-	if (STATE == 0) return;
+	Sleep(75);
 
 	draw(" ");
 
@@ -49,7 +47,7 @@ void CPlayer::draw(string s, int st) {
 }
 
 void CPlayer::kill() {
-	int t = 10;
+	int t = 8;
 	while (t--) {
 		SetColor(LIGHTRED);
 		GotoXY(m_pos.x, m_pos.y);
@@ -64,19 +62,40 @@ void CPlayer::kill() {
 		Sleep(300 / (10 - t));
 	}
 
+	PlaySound("explode.wav", NULL, SND_ASYNC);
+
 	SetColor(LIGHTRED);
 	GotoXY(m_pos.x, m_pos.y);
-	cout << "X";
+	cout << " ";
+
+	Sleep(800);
+	srand(time(NULL));
+	int r = 4;
+	for (int i = 0; i < 30; i++) {
+		int dx = m_pos.x + rand() % (2*r + 1) - r;
+		int dy = m_pos.y + rand() % (2*r + 1) - r;
+		while (dx >= WIDTH_CONSOLE || dx < 1 || dy >= HEIGHT_CONSOLE || dy < 1 && dx*dx + dy*dy > r*r) {
+			dx = m_pos.x + rand() % (2*r + 1) - r;
+			dy = m_pos.y + rand() % (2*r + 1) - r;
+		}
+
+		int clr = rand() % 2;
+		if (clr == 0) SetColor(LIGHTRED);
+		else SetColor(WHITE);
+
+		GotoXY(dx, dy);
+		cout << ".";
+	}
 
 	SetColor(WHITE);
 }
 
-void CPlayer::save(char* dir) {
-	FILE* f = fopen(dir, "a");
-	fprintf(f, "%d %d\n", m_pos.x, m_pos.y);
-	fclose(f);
+void CPlayer::save(FILE* f) {
+	//fprintf(f, "%d %d\n", m_pos.x, m_pos.y);
+	fwrite(&m_pos, sizeof(m_pos), 1, f);
 }
 
 void CPlayer::load(FILE* f) {
-	fscanf(f, "%d %d\n", &m_pos.x, &m_pos.y);
+	//fscanf(f, "%d %d\n", &m_pos.x, &m_pos.y);
+	fread(&m_pos, sizeof(m_pos), 1, f);
 }
